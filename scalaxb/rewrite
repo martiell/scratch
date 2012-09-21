@@ -1,0 +1,31 @@
+#!/bin/sh
+# Creates a git mirror of the mvn-scalaxb directory in scalaxb
+git remote add eed3si9n git@github.com:eed3si9n/scalaxb.git
+git fetch eed3si9n
+git branch -D rewrite
+git checkout -b rewrite eed3si9n/master
+
+if=
+  git ls-files |
+    egrep -v "^(mvn-scalaxb|scalaxb-maven)" |
+    xargs -r git rm -q --cached;
+  git ls-files -s | 
+    sed -r "s#(\t\"*)(mvn-scalaxb|scalaxb-maven-plugin)/#\1#" |
+    GIT_INDEX_FILE=$GIT_INDEX_FILE.tmp git update-index --index-info;
+    mv $GIT_INDEX_FILE.tmp $GIT_INDEX_FILE'
+
+pf='
+  [ "$GIT_COMMIT" = d878bd5892a1f5fac449fe5f9ef61e30b98fd438 ] &&
+    sed "s/-p [a-z0-9]* //;h;G;s/\n//;p" ||
+  [ "$GIT_COMMIT" = 0b1e390423a56574adff55eea88b094a7235a625 ] &&
+    echo ||
+  cat'
+
+mf='sed "1{s/^mvn-scalaxb: //}"'
+
+git filter-branch -f \
+  --index-filter "$if" \
+  --parent-filter "$pf" \
+  --msg-filter "$mf" \
+  --prune-empty
+
